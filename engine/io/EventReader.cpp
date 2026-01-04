@@ -2,7 +2,6 @@
 #include <iostream>
 #include <sstream>
 
-
 namespace lob {
 
 EventReader::EventReader(const std::string &filepath)
@@ -39,7 +38,8 @@ void EventReader::reset() {
 }
 
 std::optional<Event> EventReader::parse_line(const std::string &line) {
-  // Format: [exchange_ts]|[local_ts]|[event_type]|[price]|[qty]|[side]
+  // New format:
+  // [exchange_seq]|[exchange_event_ts]|[local_ingest_ts]|[event_type]|[price]|[qty]|[side]
   std::istringstream ss(line);
   std::string token;
   Event event;
@@ -48,22 +48,25 @@ std::optional<Event> EventReader::parse_line(const std::string &line) {
   while (std::getline(ss, token, '|')) {
     try {
       switch (field_idx) {
-      case 0: // exchange_ts
+      case 0: // exchange_seq (sequence number)
+        event.exchange_seq = std::stoull(token);
+        break;
+      case 1: // exchange_event_ts (event timestamp from exchange)
         event.exchange_ts = std::stoull(token);
         break;
-      case 1: // local_ts
+      case 2: // local_ingest_ts (local ingestion timestamp)
         event.local_ts = std::stoull(token);
         break;
-      case 2: // event_type
+      case 3: // event_type
         event.event_type = token;
         break;
-      case 3: // price
+      case 4: // price
         event.price = std::stod(token);
         break;
-      case 4: // quantity
+      case 5: // quantity
         event.quantity = std::stod(token);
         break;
-      case 5: // side
+      case 6: // side
         event.side = (token == "BID") ? Side::BID : Side::ASK;
         break;
       }
@@ -75,9 +78,9 @@ std::optional<Event> EventReader::parse_line(const std::string &line) {
     }
   }
 
-  if (field_idx != 6) {
-    std::cerr << "[ERROR] Invalid event format (expected 6 fields): " << line
-              << std::endl;
+  if (field_idx != 7) {
+    std::cerr << "[ERROR] Invalid event format (expected 7 fields, got "
+              << field_idx << "): " << line << std::endl;
     return std::nullopt;
   }
 

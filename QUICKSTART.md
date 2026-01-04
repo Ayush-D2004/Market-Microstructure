@@ -61,7 +61,7 @@ cd ../..
 Analyze results:
 ```powershell
 cd analysis
-python analyze_logs.py
+python analyze_logs.py --log_dir ../logs/<dir_name>
 cd ..
 ```
 

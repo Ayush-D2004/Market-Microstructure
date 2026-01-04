@@ -75,25 +75,25 @@ class LogAnalyzer:
             stats['total_trades'] = len(self.trades_df)
             stats['buy_trades'] = len(self.trades_df[self.trades_df['Side'] == 'BUY'])
             stats['sell_trades'] = len(self.trades_df[self.trades_df['Side'] == 'SELL'])
-            stats['avg_trade_price'] = self.trades_df['Price'].mean()
-            stats['total_volume'] = self.trades_df['Quantity'].sum()
+            stats['avg_trade_price'] = self.trades_df['Price_USD'].mean()
+            stats['total_volume'] = self.trades_df['Quantity_BTC'].sum()
         
         # PnL statistics
         if self.pnl_df is not None and len(self.pnl_df) > 0:
-            stats['final_pnl'] = self.pnl_df['NetPnL'].iloc[-1]
-            stats['max_pnl'] = self.pnl_df['NetPnL'].max()
-            stats['min_pnl'] = self.pnl_df['NetPnL'].min()
-            stats['max_drawdown'] = (self.pnl_df['NetPnL'].cummax() - self.pnl_df['NetPnL']).max()
+            stats['final_pnl'] = self.pnl_df['NetPnL_USD'].iloc[-1]
+            stats['max_pnl'] = self.pnl_df['NetPnL_USD'].max()
+            stats['min_pnl'] = self.pnl_df['NetPnL_USD'].min()
+            stats['max_drawdown'] = (self.pnl_df['NetPnL_USD'].cummax() - self.pnl_df['NetPnL_USD']).max()
             
             # Sharpe ratio (simplified, assuming returns)
             if len(self.pnl_df) > 1:
-                returns = self.pnl_df['NetPnL'].diff().dropna()
+                returns = self.pnl_df['NetPnL_USD'].diff().dropna()
                 if returns.std() > 0:
                     stats['sharpe_ratio'] = returns.mean() / returns.std() * np.sqrt(252)
         
         # Latency statistics
         if self.latency_df is not None and len(self.latency_df) > 0:
-            latencies = self.latency_df['Engine_Latency_us']
+            latencies = self.latency_df['Processing_Latency_us']
             stats['avg_latency_us'] = latencies.mean()
             stats['p50_latency_us'] = latencies.quantile(0.50)
             stats['p95_latency_us'] = latencies.quantile(0.95)
@@ -102,7 +102,7 @@ class LogAnalyzer:
         
         # Order book statistics
         if self.orderbook_df is not None and len(self.orderbook_df) > 0:
-            stats['avg_spread'] = self.orderbook_df['Spread'].mean()
+            stats['avg_spread'] = self.orderbook_df['Spread_USD'].mean()
             stats['avg_imbalance'] = self.orderbook_df['Imbalance'].mean()
         
         return stats
@@ -117,8 +117,8 @@ class LogAnalyzer:
         output_path = self.log_dir / output_file
         
         plt.figure(figsize=(12, 6))
-        plt.plot(self.pnl_df.index, self.pnl_df['GrossPnL'], label='Gross PnL', alpha=0.7)
-        plt.plot(self.pnl_df.index, self.pnl_df['NetPnL'], label='Net PnL', linewidth=2)
+        plt.plot(self.pnl_df.index, self.pnl_df['GrossPnL_USD'], label='Gross PnL', alpha=0.7)
+        plt.plot(self.pnl_df.index, self.pnl_df['NetPnL_USD'], label='Net PnL', linewidth=2)
         plt.xlabel('Event Index')
         plt.ylabel('PnL ($)')
         plt.title('Profit and Loss Over Time')
@@ -138,7 +138,7 @@ class LogAnalyzer:
         output_path = self.log_dir / output_file
         
         plt.figure(figsize=(12, 6))
-        plt.plot(self.inventory_df.index, self.inventory_df['Position'], linewidth=2)
+        plt.plot(self.inventory_df.index, self.inventory_df['Position_BTC'], linewidth=2)
         plt.axhline(y=0, color='r', linestyle='--', alpha=0.5)
         plt.xlabel('Event Index')
         plt.ylabel('Position (BTC)')
@@ -157,7 +157,7 @@ class LogAnalyzer:
         
         output_path = self.log_dir / output_file
         
-        latencies = self.latency_df['Engine_Latency_us']
+        latencies = self.latency_df['Processing_Latency_us']
         
         plt.figure(figsize=(12, 6))
         plt.hist(latencies, bins=50, edgecolor='black', alpha=0.7)
@@ -185,13 +185,13 @@ class LogAnalyzer:
         fig, axes = plt.subplots(3, 1, figsize=(12, 10))
         
         # Mid price
-        axes[0].plot(self.orderbook_df.index, self.orderbook_df['MidPrice'], linewidth=1)
+        axes[0].plot(self.orderbook_df.index, self.orderbook_df['MidPrice_USD'], linewidth=1)
         axes[0].set_ylabel('Mid Price ($)')
         axes[0].set_title('Order Book Metrics Over Time')
         axes[0].grid(True, alpha=0.3)
         
         # Spread
-        axes[1].plot(self.orderbook_df.index, self.orderbook_df['Spread'], linewidth=1, color='orange')
+        axes[1].plot(self.orderbook_df.index, self.orderbook_df['Spread_USD'], linewidth=1, color='orange')
         axes[1].set_ylabel('Spread ($)')
         axes[1].grid(True, alpha=0.3)
         

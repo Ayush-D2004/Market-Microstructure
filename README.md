@@ -12,21 +12,7 @@ This system implements a complete pipeline for:
 
 ## 🏗️ Architecture
 
-```
-Binance API (REST + WebSocket)
-         ↓
-Python Ingestion Layer
-         ↓
-Event Stream Files (.events)
-         ↓
-C++ Market Engine
-         ↓
-Order Book + Strategy + Metrics
-         ↓
-Log Files (timestamped)
-         ↓
-Python Analysis Layer
-```
+![System Architecture](system_architecture.png)
 
 ## 🚀 Quick Start
 
@@ -82,7 +68,7 @@ This will:
 #### Step 3: Analyze Results
 ```bash
 cd analysis
-python analyze_logs.py
+python analyze_logs.py --log_dir ../logs/<dir_name>
 ```
 
 This generates:
