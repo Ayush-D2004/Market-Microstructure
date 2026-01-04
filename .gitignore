@@ -6,5 +6,8 @@ gemini.md
 PROJECT_SUMMARY.md
 GETTING_STARTED.md  
 
+# build
+engine/build
+
 # venv
 lob
