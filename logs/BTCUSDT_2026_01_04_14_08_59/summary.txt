@@ -1,0 +1,30 @@
+============================================================
+MARKET MICROSTRUCTURE ANALYSIS REPORT
+============================================================
+
+--- Trading Statistics ---
+total_trades: 1284
+buy_trades: 777
+sell_trades: 507
+avg_trade_price: 91360.29065420562
+total_volume: 12.84
+
+--- Performance Metrics ---
+final_pnl: -110.9770
+max_pnl: 0.0000
+min_pnl: -110.9770
+max_drawdown: 110.9770
+sharpe_ratio: -13.1360
+
+--- System Metrics ---
+avg_latency_us: 27.76
+p50_latency_us: 13.00
+p95_latency_us: 45.00
+p99_latency_us: 274.60
+max_latency_us: 332.00
+
+--- Market Microstructure ---
+avg_spread: -7.766313
+avg_imbalance: 0.113335
+
+============================================================
