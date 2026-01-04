@@ -151,14 +151,6 @@ The analysis script generates:
 3. **Latency Histogram**: Distribution of processing latencies with P50/P95/P99
 4. **Order Book Metrics**: Mid-price, spread, and imbalance evolution
 
-## 🧪 Testing
-
-Run unit tests (to be implemented):
-```bash
-cd engine/build
-ctest
-```
-
 ## 🎓 Educational Value
 
 This project demonstrates:
