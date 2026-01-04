@@ -28,38 +28,38 @@ This is a **market microstructure system** implementing:
 
 ---
 
-## ✅ What's Implemented
+## What's Implemented
 
 ### 1. Python Ingestion Layer (`ingestion/data.py`)
-✅ Binance REST API for historical snapshots  
-✅ Binance WebSocket for real-time streaming  
-✅ Automatic reconnection on failures  
-✅ Normalized event format: `timestamp|timestamp|type|price|qty|side`
+Binance REST API for historical snapshots  
+Binance WebSocket for real-time streaming  
+Automatic reconnection on failures  
+Normalized event format: `timestamp|timestamp|type|price|qty|side`
 
 ### 2. C++ Core Engine (`engine/`)
 
 **Order Book** (`order_book/`)
-- ✅ Efficient price-level management with `std::map`
-- ✅ O(log n) insert/delete, O(1) best bid/ask
-- ✅ Market microstructure metrics (imbalance, spread)
+- Efficient price-level management with `std::map`
+- O(log n) insert/delete, O(1) best bid/ask
+- Market microstructure metrics (imbalance, spread)
 
 **Strategies** (`strategy/`)
-- ✅ **Imbalance Strategy**: Trade on bid/ask volume ratio
-- ✅ **Market Making**: Inventory-aware reservation pricing
+- **Imbalance Strategy**: Trade on bid/ask volume ratio
+- **Market Making**: Inventory-aware reservation pricing
 
 **Metrics** (`metrics/`)
-- ✅ Custom log naming: `BTCUSDT-DD_MM_YYYY_HH_MM_SS-type.log`
-- ✅ Timestamped entries: `HH:MM:SS` format
-- ✅ 5 log types: trades, latency, inventory, PnL, orderbook
+- Custom log naming: `BTCUSDT-DD_MM_YYYY_HH_MM_SS-type.log`
+- Timestamped entries: `HH:MM:SS` format
+- 5 log types: trades, latency, inventory, PnL, orderbook
 
 **I/O** (`io/`)
-- ✅ Event file parser
-- ✅ Efficient streaming processing
+- Event file parser
+- Efficient streaming processing
 
 ### 3. Python Analysis Layer (`analysis/analyze_logs.py`)
-✅ Statistical analysis (Sharpe, drawdown, hit rate)  
-✅ Latency metrics (P50, P95, P99)  
-✅ 4 visualization types (PnL, inventory, latency, orderbook)
+Statistical analysis (Sharpe, drawdown, hit rate)  
+Latency metrics (P50, P95, P99)  
+Visualization (PnL, inventory, latency, orderbook)
 
 ---
 
@@ -77,7 +77,7 @@ cmake --version   # Should be 3.15+
 g++ --version     # Or MSVC/Clang
 ```
 
-### Installation (3 minutes)
+### Installation 
 
 **Step 1: Install Python dependencies**
 ```powershell
@@ -167,13 +167,6 @@ auto strategy = std::make_unique<ImbalanceStrategy>(0.3, 5);
 auto strategy = std::make_unique<MarketMakingStrategy>(0.1, 10.0);
 ```
 
-**Output Logs** (in `./logs/`):
-- `BTCUSDT-03_01_2026_13_08_00-trades.log`
-- `BTCUSDT-03_01_2026_13_08_00-latency.log`
-- `BTCUSDT-03_01_2026_13_08_00-inventory.log`
-- `BTCUSDT-03_01_2026_13_08_00-pnl.log`
-- `BTCUSDT-03_01_2026_13_08_00-orderbook.log`
-
 ### Analysis
 
 **Run:**
@@ -189,62 +182,6 @@ python analyze_logs.py
 - `latency_histogram.png`: Performance distribution
 - `orderbook_depth.png`: Market metrics
 
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────┐
-│         Binance API                 │
-│  REST (Snapshot) | WebSocket (Live) │
-└──────────────┬──────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│    Python Ingestion Layer            │
-│  - Normalize data                    │
-│  - Write to .events file             │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│    Event Files (.events)             │
-│  Format: ts|ts|type|price|qty|side   │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│    C++ Market Engine                 │
-│  ┌────────────────────────────────┐  │
-│  │ Event Reader                   │  │
-│  └────────┬───────────────────────┘  │
-│           ↓                          │
-│  ┌────────────────────────────────┐  │
-│  │ Order Book (Bid/Ask)           │  │
-│  └────────┬───────────────────────┘  │
-│           ↓                          │
-│  ┌────────────────────────────────┐  │
-│  │ Strategy Engine                │  │
-│  │ - Imbalance / Market Making    │  │
-│  └────────┬───────────────────────┘  │
-│           ↓                          │
-│  ┌────────────────────────────────┐  │
-│  │ Metrics Logger                 │  │
-│  └────────┬───────────────────────┘  │
-└───────────┼──────────────────────────┘
-            ↓
-┌──────────────────────────────────────┐
-│    Log Files (5 types)               │
-│  - trades, latency, inventory,       │
-│    pnl, orderbook                    │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│    Python Analysis Layer             │
-│  - Parse logs                        │
-│  - Calculate metrics                 │
-│  - Generate plots                    │
-└──────────────────────────────────────┘
-```
-
----
 
 ## 🔧 Customization
 
@@ -301,8 +238,6 @@ std::string asset = "ETHUSDT";
 
 ## 📈 Expected Performance
 
-**Hardware:** Modern CPU (Intel i5/i7, AMD Ryzen)
-
 | Metric | Expected Value |
 |--------|----------------|
 | Event Processing Latency | 1-10 μs |
@@ -335,24 +270,6 @@ pip install --upgrade -r requirements.txt
 - Check `./logs/` directory exists
 - Verify engine ran successfully
 - Check file permissions
-
----
-
-## 📚 Learning Resources
-
-**Market Microstructure:**
-- Avellaneda & Stoikov (2008): High-frequency trading in a limit order book
-- Cont, Stoikov, Talreja (2010): Stochastic model for order book dynamics
-
-**C++ Performance:**
-- Data structure selection (map vs unordered_map)
-- Memory allocation strategies
-- Profiling with `perf` or Visual Studio Profiler
-
-**Quantitative Finance:**
-- Order flow toxicity
-- Adverse selection
-- Inventory risk management
 
 ---
 
