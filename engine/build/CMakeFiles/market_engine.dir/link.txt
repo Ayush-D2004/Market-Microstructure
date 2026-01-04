@@ -1,3 +1,0 @@
-C:\Users\Ayush\scoop\apps\cmake\3.30.5\bin\cmake.exe -E rm -f CMakeFiles\market_engine.dir/objects.a
-C:\Users\Ayush\scoop\apps\gcc\current\bin\ar.exe qc CMakeFiles\market_engine.dir/objects.a @CMakeFiles\market_engine.dir\objects1.rsp
-C:\Users\Ayush\scoop\apps\gcc\current\bin\g++.exe -O3 -march=native -Wl,--whole-archive CMakeFiles\market_engine.dir/objects.a -Wl,--no-whole-archive -o market_engine.exe -Wl,--out-implib,libmarket_engine.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\market_engine.dir\linkLibs.rsp
