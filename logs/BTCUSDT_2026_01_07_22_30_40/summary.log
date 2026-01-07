@@ -1,0 +1,22 @@
+=== PERFORMANCE SUMMARY ===
+Asset: BTCUSDT
+Total Events: 31
+Total Trades: 2790
+
+--- Ingest Latency (Exchange -> Local) ---
+  Min:  -1633 us
+  Avg:  -1509.81 us
+  P50:  -1621 us
+  P95:  -1385 us
+  P99:  0 us
+  Max:  0 us
+
+--- Processing Latency (Local -> Processing) ---
+  Min:  10 us
+  Avg:  74.4194 us
+  P50:  11 us
+  P95:  28 us
+  P99:  50 us
+  Max:  1888 us
+
+=== END SUMMARY ===

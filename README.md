@@ -6,9 +6,18 @@ A high-performance, real-time **Limit Order Book (LOB)** and **Strategy Evaluati
 
 This system implements a complete pipeline for:
 1. **Data Ingestion**: Fetching historical and real-time market data from Binance
-2. **Order Book Maintenance**: High-performance C++ implementation of a limit order book
+2. **Order Book Maintenance**: High-performance C++ implementation of a **Hybrid L2/L3** limit order book
 3. **Strategy Execution**: Real-time trading strategies (Imbalance, Market Making)
 4. **Performance Metrics**: Comprehensive logging and analysis of system and trading performance
+
+### 🆕 Hybrid L2/L3 Order Book
+
+This project features a **unique Hybrid L2/L3 implementation** that simulates individual order queues from aggregated L2 market data:
+
+- **L2 Input**: Price level aggregated volume (from Binance)
+- **L3 Simulation**: Synthetic order queues with FIFO semantics
+- **Delta-Based Logic**: Automatically infers order additions/executions
+- **Invariant Validation**: Enforces volume consistency and queue integrity
 
 ## 🏗️ Architecture
 
@@ -85,11 +94,13 @@ This generates:
 - ✅ **Fault Tolerance**: Automatic reconnection on WebSocket failures
 
 ### C++ Core Engine
-- ✅ **High-Performance Order Book**: `std::map` for efficient price-level management
+- ✅ **Hybrid L2/L3 Order Book**: Simulates individual orders from L2 data with FIFO semantics
+- ✅ **High-Performance**: `std::map` for price levels, `std::deque` for order queues
 - ✅ **Market Microstructure Metrics**: Imbalance, spread, mid-price calculations
 - ✅ **Strategy Engine**: Pluggable strategy architecture
 - ✅ **Low Latency**: Microsecond-level event processing
 - ✅ **Comprehensive Logging**: Timestamped logs with custom naming
+- ✅ **Invariant Validation**: Automatic consistency checks in debug builds
 
 ### Implemented Strategies
 
@@ -102,6 +113,23 @@ This generates:
    - Inventory-aware reservation price
    - Risk-adjusted position management
    - Spread-based liquidity provision
+
+### Testing & Verification
+
+- ✅ **Test Suite**: 9 comprehensive test cases for Hybrid L2/L3 logic
+- ✅ **Demo Application**: Interactive demonstration of L3 simulation
+- ✅ **All Tests Passing**: Verified build and execution
+
+Run tests:
+```bash
+# Compile and run test suite
+g++ -std=c++17 -I./engine tests/test_hybrid_lob.cpp engine/order_book/OrderBook.cpp -o test_hybrid.exe
+./test_hybrid.exe
+
+# Run interactive demo
+g++ -std=c++17 -I./engine tests/demo_hybrid_lob.cpp engine/order_book/OrderBook.cpp -o demo_hybrid.exe
+./demo_hybrid.exe
+```
 
 ### Metrics & Logging
 
@@ -158,5 +186,17 @@ This project demonstrates:
 - **High-Performance Computing**: C++ optimization, data structure selection
 - **System Design**: Multi-language integration, event-driven architecture
 - **Quantitative Finance**: Strategy design, risk management, performance metrics
+
+## 📚 Hybrid L2/L3 Documentation
+
+Complete documentation for the Hybrid L2/L3 implementation:
+
+- **[HYBRID_L2L3_IMPLEMENTATION.md](HYBRID_L2L3_IMPLEMENTATION.md)** - Full technical documentation
+Key features:
+- Delta-based L2 → L3 conversion
+- FIFO queue semantics for executions
+- Synthetic order ID generation
+- Comprehensive invariant validation
+- Zero performance impact on L2 operations
 
 ---
