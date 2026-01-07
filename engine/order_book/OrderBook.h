@@ -15,7 +15,7 @@ public:
 
   // Core operations (Binance L2 semantics: replace, not add)
   void add_order(double price, double quantity, Side side, uint64_t timestamp);
-  void cancel_order(double price, Side side);
+  void clear_price_level(double price, Side side);
   void update_order(double price, double quantity, Side side,
                     uint64_t timestamp);
 
@@ -33,6 +33,9 @@ public:
   std::vector<std::pair<double, double>> get_bid_depth(size_t n) const;
   std::vector<std::pair<double, double>> get_ask_depth(size_t n) const;
 
+  // L3 data access
+  const std::deque<Order> &get_orders_at_price(double price, Side side) const;
+
   // Market microstructure metrics
   double calculate_imbalance(size_t depth = 5) const;
   double get_total_bid_volume(size_t depth = 10) const;
@@ -40,10 +43,14 @@ public:
 
   // Utility
   void clear();
+  void reset_order_ids() { next_order_id_ = 1; }
   std::string get_symbol() const { return symbol_; }
 
 private:
   std::string symbol_;
+
+  // Order ID counter for synthetic L3 orders
+  uint64_t next_order_id_;
 
   // Bid book: sorted descending (highest price first)
   std::map<double, Limit, std::greater<double>> bids_;
