@@ -1,6 +1,7 @@
-#include "Strategy.h"
-#include <cmath>
 #include <iostream>
+#include "Strategy.h"
+#include <algorithm>
+#include <cmath>
 
 namespace lob {
 
@@ -25,83 +26,118 @@ void Strategy::update_position(double quantity, double price) {
   position_ = new_position;
 }
 
-// Imbalance Strategy Implementation
-ImbalanceStrategy::ImbalanceStrategy(double threshold, size_t depth)
-    : Strategy("ImbalanceStrategy"), threshold_(threshold), depth_(depth),
-      last_imbalance_(0.0) {}
+// Regime Aware Imbalance Strategy Implementation
+RegimeAwareImbalanceStrategy::RegimeAwareImbalanceStrategy(
+    double z_buy_threshold, double z_sell_threshold, size_t window_size)
+    : Strategy("RegimeAwareImbalanceStrategy"),
+      z_buy_threshold_(z_buy_threshold), z_sell_threshold_(z_sell_threshold),
+      window_size_(window_size), alpha_decay_(0.5) {}
 
-int ImbalanceStrategy::evaluate(const OrderBook &book, uint64_t timestamp) {
-  // Calculate order book imbalance
-  double imbalance = book.calculate_imbalance(depth_);
-  last_imbalance_ = imbalance;
+int RegimeAwareImbalanceStrategy::evaluate(const OrderBook &book,
+                                           uint64_t timestamp) {
+  // 1. Get current market data
+  auto spread_opt = book.get_spread();
+  if (!spread_opt)
+    return 0;
+  double spread = *spread_opt;
 
-  // Trading logic:
-  // If imbalance > threshold: more bids than asks -> expect price to rise ->
-  // BUY If imbalance < -threshold: more asks than bids -> expect price to fall
-  // -> SELL
+  double imbalance = calculate_weighted_imbalance(book);
 
-  if (imbalance > threshold_) {
-    return 1; // Buy signal
-  } else if (imbalance < -threshold_) {
-    return -1; // Sell signal
-  }
+  // 2. Update Rolling Statistics
+  spread_history_.push_back(spread);
+  if (spread_history_.size() > window_size_)
+    spread_history_.pop_front();
 
-  return 0; // Hold
-}
+  imbalance_history_.push_back(imbalance);
+  if (imbalance_history_.size() > window_size_)
+    imbalance_history_.pop_front();
 
-// Market Making Strategy Implementation
-MarketMakingStrategy::MarketMakingStrategy(double risk_aversion,
-                                           double inventory_limit)
-    : Strategy("MarketMakingStrategy"), risk_aversion_(risk_aversion),
-      inventory_limit_(inventory_limit), reservation_price_(0.0) {}
-
-int MarketMakingStrategy::evaluate(const OrderBook &book, uint64_t timestamp) {
-  // Calculate reservation price
-  reservation_price_ = calculate_reservation_price(book);
-
-  auto mid_price = book.get_mid_price();
-  if (!mid_price)
+  // Need enough history to have valid statistics
+  if (spread_history_.size() < window_size_ / 2)
     return 0;
 
-  // Inventory management logic
-  // If we have too much inventory, we want to sell
-  // If we have negative inventory (short), we want to buy
+  // 3. Condition 1: Spread Gating
+  // Only trade if spread is tight (<= median spread)
+  // This filters out high volatility / low liquidity periods
+  std::vector<double> spread_vec(spread_history_.begin(),
+                                 spread_history_.end());
+  double median_spread = get_rolling_median(spread_vec);
 
-  double inventory_ratio = position_ / inventory_limit_;
-
-  // Aggressive inventory reduction
-  if (inventory_ratio > 0.7) {
-    return -1; // Sell to reduce long position
-  } else if (inventory_ratio < -0.7) {
-    return 1; // Buy to reduce short position
+  if (spread > median_spread) {
+    return 0; // Filter: Spread too wide, adverse selection risk high
   }
 
-  // Market making: provide liquidity on both sides
-  // This is simplified - in reality, we'd place limit orders
-  // Here we just signal when to take liquidity based on reservation price
+  // 4. Condition 2: Z-Score Normalization
+  auto [mean, std_dev] = get_rolling_mean_std(imbalance_history_);
 
-  if (*mid_price < reservation_price_ - 0.0001) {
-    return 1; // Price is below our reservation -> buy
-  } else if (*mid_price > reservation_price_ + 0.0001) {
-    return -1; // Price is above our reservation -> sell
+  // Avoid division by zero
+  if (std_dev < 1e-6)
+    return 0;
+
+  double z_score = (imbalance - mean) / std_dev;
+
+  // 5. Condition 3: Directional Asymmetry Logic
+  if (z_score > z_buy_threshold_) {
+    return 1; // Buy Signal: Imbalance > Mean + Threshold * Std
+  } else if (z_score < z_sell_threshold_) {
+    return -1; // Sell Signal: Imbalance < Mean - Threshold * Std
   }
 
   return 0; // Hold
 }
 
-double
-MarketMakingStrategy::calculate_reservation_price(const OrderBook &book) {
-  auto mid_price = book.get_mid_price();
-  if (!mid_price)
+double RegimeAwareImbalanceStrategy::calculate_weighted_imbalance(
+    const OrderBook &book) const {
+  // Weight levels closer to touch higher: w_i = exp(-alpha * i)
+  double bid_weighted_sum = 0.0;
+  double ask_weighted_sum = 0.0;
+
+  auto bid_depth = book.get_bid_depth(5);
+  auto ask_depth = book.get_ask_depth(5);
+
+  for (size_t i = 0; i < bid_depth.size(); ++i) {
+    double weight = std::exp(-alpha_decay_ * i);
+    bid_weighted_sum += bid_depth[i].second * weight;
+  }
+
+  for (size_t i = 0; i < ask_depth.size(); ++i) {
+    double weight = std::exp(-alpha_decay_ * i);
+    ask_weighted_sum += ask_depth[i].second * weight;
+  }
+
+  double total_weighted_volume = bid_weighted_sum + ask_weighted_sum;
+  if (total_weighted_volume < 1e-8)
     return 0.0;
 
-  // Simplified Avellaneda-Stoikov reservation price
-  // r = mid_price - q * gamma * sigma^2 * (T - t)
-  // Where q = inventory, gamma = risk aversion
-  // For simplicity, we use: r = mid_price - q * gamma
-
-  double inventory_adjustment = position_ * risk_aversion_;
-  return *mid_price - inventory_adjustment;
+  // Normalized Imbalance [-1, 1]
+  return (bid_weighted_sum - ask_weighted_sum) / total_weighted_volume;
 }
 
-} // namespace lob
+double RegimeAwareImbalanceStrategy::get_rolling_median(
+    std::vector<double> data) const {
+  if (data.empty())
+    return 0.0;
+  size_t n = data.size();
+  std::nth_element(data.begin(), data.begin() + n / 2, data.end());
+  return data[n / 2];
+}
+
+std::pair<double, double> RegimeAwareImbalanceStrategy::get_rolling_mean_std(
+    const std::deque<double> &data) const {
+  if (data.empty())
+    return {0.0, 0.0};
+
+  double sum = 0.0;
+  for (double val : data)
+    sum += val;
+  double mean = sum / data.size();
+
+  double sq_sum = 0.0;
+  for (double val : data)
+    sq_sum += (val - mean) * (val - mean);
+  double std_dev = std::sqrt(sq_sum / data.size());
+
+  return {mean, std_dev};
+}
+
+} 

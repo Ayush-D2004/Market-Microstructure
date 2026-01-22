@@ -25,10 +25,10 @@ int main(int argc, char *argv[]) {
   EventReader reader(event_file);
   MetricsLogger metrics(asset, "../../logs");
 
-  // Initialize strategy (choose one)
+  // Initialize strategy (Research-Grade Regime Aware Imbalance)
   std::unique_ptr<Strategy> strategy =
-      std::make_unique<ImbalanceStrategy>(0.3, 5);
-  // Or use: std::make_unique<MarketMakingStrategy>(0.1, 10.0);
+      std::make_unique<RegimeAwareImbalanceStrategy>(1.5, -1.5, 100);
+  // Params: Z-Score Buy > 1.5, Sell < -1.5, Window = 100 events
 
   std::cout << "[INFO] Using strategy: " << strategy->get_name() << std::endl;
 

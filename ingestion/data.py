@@ -28,7 +28,7 @@ class BinanceDataIngestion:
     Implements correct snapshot+delta synchronization per Binance spec.
     """
     
-    def __init__(self, symbol: str = "BTCUSDT", output_dir: str = "./data"):
+    def __init__(self, symbol: str = "BTCUSDT", output_dir: str = "../data"):
         self.symbol = symbol
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -297,7 +297,7 @@ class BinanceDataIngestion:
 
 async def main():
     """Entry point for data ingestion."""
-    ingestion = BinanceDataIngestion(symbol="BTCUSDT", output_dir="./data")
+    ingestion = BinanceDataIngestion(symbol="BTCUSDT", output_dir="../data")
     
     try:
         await ingestion.run()

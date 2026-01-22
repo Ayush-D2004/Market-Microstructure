@@ -1,9 +1,10 @@
 #pragma once
 
 #include "../order_book/OrderBook.h"
+#include <deque>
 #include <memory>
 #include <string>
-
+#include <vector>
 
 namespace lob {
 
@@ -11,7 +12,7 @@ namespace lob {
 class Strategy {
 public:
   explicit Strategy(const std::string &name)
-      : name_(name), position_(0.0), pnl_(0.0) {}
+      : name_(name), position_(0.0), pnl_(0.0), avg_entry_price_(0.0) {}
   virtual ~Strategy() = default;
 
   // Main strategy evaluation - returns signal: 1 (buy), -1 (sell), 0 (hold)
@@ -32,34 +33,36 @@ protected:
   double avg_entry_price_;
 };
 
-// Order Book Imbalance Strategy
-class ImbalanceStrategy : public Strategy {
+// Research-Grade Regime Aware Imbalance Strategy
+// Implements:
+// 1. Z-Score Normalization (Dynamic Thresholds)
+// 2. Spread Conditioning (Gating)
+// 3. Queue-Weighted Imbalance (Depth Decay)
+// 4. Directional Asymmetry
+class RegimeAwareImbalanceStrategy : public Strategy {
 public:
-  ImbalanceStrategy(double threshold = 0.3, size_t depth = 5);
+  RegimeAwareImbalanceStrategy(double z_buy_threshold = 1.5,
+                               double z_sell_threshold = -1.5,
+                               size_t window_size = 100);
 
   int evaluate(const OrderBook &book, uint64_t timestamp) override;
 
 private:
-  double threshold_; // Imbalance threshold to trigger trade
-  size_t depth_;     // Number of levels to consider
-  double last_imbalance_;
-};
+  // Hyperparameters
+  double z_buy_threshold_;
+  double z_sell_threshold_;
+  size_t window_size_;
+  double alpha_decay_; // For queue weighting
 
-// Simple Market Making Strategy (Simplified Avellaneda-Stoikov)
-class MarketMakingStrategy : public Strategy {
-public:
-  MarketMakingStrategy(double risk_aversion = 0.1,
-                       double inventory_limit = 10.0);
+  // Rolling Statistics Buffers
+  std::deque<double> spread_history_;
+  std::deque<double> imbalance_history_;
 
-  int evaluate(const OrderBook &book, uint64_t timestamp) override;
-
-private:
-  double risk_aversion_;
-  double inventory_limit_;
-  double reservation_price_;
-
-  // Calculate reservation price based on inventory
-  double calculate_reservation_price(const OrderBook &book);
+  // Helper methods
+  double calculate_weighted_imbalance(const OrderBook &book) const;
+  double get_rolling_median(std::vector<double> data) const;
+  std::pair<double, double>
+  get_rolling_mean_std(const std::deque<double> &data) const;
 };
 
 } // namespace lob
