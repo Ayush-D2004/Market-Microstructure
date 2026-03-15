@@ -216,6 +216,34 @@ double OrderBook::calculate_imbalance(size_t depth) const {
   return (bid_volume - ask_volume) / total_volume;
 }
 
+double OrderBook::calculate_depth_slope(size_t depth) const {
+  auto bid_depth = get_bid_depth(depth);
+  auto ask_depth = get_ask_depth(depth);
+
+  if (bid_depth.empty() || ask_depth.empty())
+    return 0.0;
+
+  double total_bid_vol = 0.0;
+  double deepest_bid = bid_depth.front().first;
+  for (const auto &level : bid_depth) {
+    total_bid_vol += level.second;
+    deepest_bid = level.first;
+  }
+
+  double total_ask_vol = 0.0;
+  double deepest_ask = ask_depth.front().first;
+  for (const auto &level : ask_depth) {
+    total_ask_vol += level.second;
+    deepest_ask = level.first;
+  }
+
+  double price_range = deepest_ask - deepest_bid;
+  if (price_range < 1e-8)
+    return 0.0;
+
+  return (total_bid_vol + total_ask_vol) / price_range;
+}
+
 void OrderBook::validate_book_integrity() const {
   // CRITICAL: Detect crossed book (data corruption indicator)
   // In a valid order book: best_bid < best_ask

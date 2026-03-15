@@ -1,7 +1,8 @@
-#include <iostream>
 #include "Strategy.h"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
+
 
 namespace lob {
 
@@ -31,7 +32,8 @@ RegimeAwareImbalanceStrategy::RegimeAwareImbalanceStrategy(
     double z_buy_threshold, double z_sell_threshold, size_t window_size)
     : Strategy("RegimeAwareImbalanceStrategy"),
       z_buy_threshold_(z_buy_threshold), z_sell_threshold_(z_sell_threshold),
-      window_size_(window_size), alpha_decay_(0.5) {}
+      window_size_(window_size), alpha_decay_(0.5),
+      spread_history_(window_size), imbalance_history_(window_size) {}
 
 int RegimeAwareImbalanceStrategy::evaluate(const OrderBook &book,
                                            uint64_t timestamp) {
@@ -43,14 +45,9 @@ int RegimeAwareImbalanceStrategy::evaluate(const OrderBook &book,
 
   double imbalance = calculate_weighted_imbalance(book);
 
-  // 2. Update Rolling Statistics
-  spread_history_.push_back(spread);
-  if (spread_history_.size() > window_size_)
-    spread_history_.pop_front();
-
-  imbalance_history_.push_back(imbalance);
-  if (imbalance_history_.size() > window_size_)
-    imbalance_history_.pop_front();
+  // 2. Update Rolling Statistics (O(log N) and O(1))
+  spread_history_.add(spread);
+  imbalance_history_.add(imbalance);
 
   // Need enough history to have valid statistics
   if (spread_history_.size() < window_size_ / 2)
@@ -59,16 +56,15 @@ int RegimeAwareImbalanceStrategy::evaluate(const OrderBook &book,
   // 3. Condition 1: Spread Gating
   // Only trade if spread is tight (<= median spread)
   // This filters out high volatility / low liquidity periods
-  std::vector<double> spread_vec(spread_history_.begin(),
-                                 spread_history_.end());
-  double median_spread = get_rolling_median(spread_vec);
+  double median_spread = spread_history_.get_median();
 
   if (spread > median_spread) {
     return 0; // Filter: Spread too wide, adverse selection risk high
   }
 
   // 4. Condition 2: Z-Score Normalization
-  auto [mean, std_dev] = get_rolling_mean_std(imbalance_history_);
+  double mean = imbalance_history_.get_mean();
+  double std_dev = imbalance_history_.get_std_dev();
 
   // Avoid division by zero
   if (std_dev < 1e-6)
@@ -113,31 +109,4 @@ double RegimeAwareImbalanceStrategy::calculate_weighted_imbalance(
   return (bid_weighted_sum - ask_weighted_sum) / total_weighted_volume;
 }
 
-double RegimeAwareImbalanceStrategy::get_rolling_median(
-    std::vector<double> data) const {
-  if (data.empty())
-    return 0.0;
-  size_t n = data.size();
-  std::nth_element(data.begin(), data.begin() + n / 2, data.end());
-  return data[n / 2];
-}
-
-std::pair<double, double> RegimeAwareImbalanceStrategy::get_rolling_mean_std(
-    const std::deque<double> &data) const {
-  if (data.empty())
-    return {0.0, 0.0};
-
-  double sum = 0.0;
-  for (double val : data)
-    sum += val;
-  double mean = sum / data.size();
-
-  double sq_sum = 0.0;
-  for (double val : data)
-    sq_sum += (val - mean) * (val - mean);
-  double std_dev = std::sqrt(sq_sum / data.size());
-
-  return {mean, std_dev};
-}
-
-} 
+} // namespace lob

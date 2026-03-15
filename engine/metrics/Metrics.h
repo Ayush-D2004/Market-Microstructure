@@ -9,8 +9,19 @@
 #include <string>
 #include <vector>
 
-
 namespace lob {
+
+#pragma pack(push, 1)
+struct QuantFeatures {
+  uint64_t timestamp;
+  double mid_price;
+  double spread;
+  double imbalance;
+  double depth_slope;
+  double realized_vol;
+  uint64_t system_latency;
+};
+#pragma pack(pop)
 
 class MetricsLogger {
 public:
@@ -19,8 +30,11 @@ public:
   ~MetricsLogger();
 
   // Log different types of metrics
-  void log_trade(uint64_t timestamp, double price, double quantity,
-                 const std::string &side);
+  void log_trade(uint64_t timestamp, double execution_price,
+                 double intended_price, double quantity,
+                 const std::string &side, double slippage_bps);
+
+  void log_quant_features(const QuantFeatures &features);
 
   // Enhanced latency logging with separation of concerns
   void log_latency(uint64_t exchange_ts, uint64_t local_ts,
@@ -50,6 +64,7 @@ private:
   std::ofstream pnl_log_;
   std::ofstream orderbook_log_;
   std::ofstream summary_log_;
+  std::ofstream quant_features_log_;
 
   // Latency tracking for percentile calculation
   std::vector<int64_t> ingest_latencies_us_; // Exchange -> Local (data arrival)

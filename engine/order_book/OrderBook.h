@@ -38,6 +38,8 @@ public:
 
   // Market microstructure metrics
   double calculate_imbalance(size_t depth = 5) const;
+  double calculate_depth_slope(size_t depth = 5) const;
+
   double get_total_bid_volume(size_t depth = 10) const;
   double get_total_ask_volume(size_t depth = 10) const;
 

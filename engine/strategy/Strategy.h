@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../order_book/OrderBook.h"
+#include "RollingMath.h"
 #include <deque>
 #include <memory>
 #include <string>
@@ -54,15 +55,12 @@ private:
   size_t window_size_;
   double alpha_decay_; // For queue weighting
 
-  // Rolling Statistics Buffers
-  std::deque<double> spread_history_;
-  std::deque<double> imbalance_history_;
+  // O(1) / O(log N) Rolling Statistics Buffers
+  RollingMedian spread_history_;
+  RollingVariance imbalance_history_;
 
   // Helper methods
   double calculate_weighted_imbalance(const OrderBook &book) const;
-  double get_rolling_median(std::vector<double> data) const;
-  std::pair<double, double>
-  get_rolling_mean_std(const std::deque<double> &data) const;
 };
 
 } // namespace lob

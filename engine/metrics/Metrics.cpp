@@ -36,10 +36,13 @@ MetricsLogger::MetricsLogger(const std::string &asset,
   pnl_log_.open(output_dir_ + "/pnl.log", std::ios::app);
   orderbook_log_.open(output_dir_ + "/orderbook.log", std::ios::app);
   summary_log_.open(output_dir_ + "/summary.log", std::ios::app);
+  quant_features_log_.open(output_dir_ + "/quant_features.bin",
+                           std::ios::app | std::ios::binary);
 
   // Write headers with EXPLICIT UNITS
   if (trades_log_.is_open()) {
-    trades_log_ << "Time,Price_USD,Quantity_BTC,Side\n";
+    trades_log_ << "Time,ExecutionPrice_USD,IntendedPrice_USD,Quantity_BTC,"
+                   "Side,Slippage_BPS\n";
   }
   if (latency_log_.is_open()) {
     // EXPLICIT UNITS: All timestamps in milliseconds, latencies in microseconds
@@ -83,14 +86,25 @@ MetricsLogger::~MetricsLogger() {
     orderbook_log_.close();
   if (summary_log_.is_open())
     summary_log_.close();
+  if (quant_features_log_.is_open())
+    quant_features_log_.close();
 }
 
-void MetricsLogger::log_trade(uint64_t timestamp, double price, double quantity,
-                              const std::string &side) {
+void MetricsLogger::log_trade(uint64_t timestamp, double execution_price,
+                              double intended_price, double quantity,
+                              const std::string &side, double slippage_bps) {
   if (trades_log_.is_open()) {
-    trades_log_ << format_time(timestamp) << "," << price << "," << quantity
-                << "," << side << "\n";
+    trades_log_ << format_time(timestamp) << "," << execution_price << ","
+                << intended_price << "," << quantity << "," << side << ","
+                << slippage_bps << "\n";
     total_trades_++;
+  }
+}
+
+void MetricsLogger::log_quant_features(const QuantFeatures &features) {
+  if (quant_features_log_.is_open()) {
+    quant_features_log_.write(reinterpret_cast<const char *>(&features),
+                              sizeof(QuantFeatures));
   }
 }
 
@@ -158,6 +172,8 @@ void MetricsLogger::flush() {
     orderbook_log_.flush();
   if (summary_log_.is_open())
     summary_log_.flush();
+  if (quant_features_log_.is_open())
+    quant_features_log_.flush();
 }
 
 void MetricsLogger::generate_summary() {

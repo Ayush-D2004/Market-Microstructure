@@ -1,5 +1,6 @@
 # Project configuration
 .vscode
+.env
 
 # Project documentation 
 gemini.md

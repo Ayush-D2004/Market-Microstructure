@@ -38,8 +38,8 @@ void EventReader::reset() {
 }
 
 std::optional<Event> EventReader::parse_line(const std::string &line) {
-  // New format:
-  // [exchange_seq]|[exchange_event_ts]|[local_ingest_ts]|[event_type]|[price]|[qty]|[side]
+  // Format:
+  // [exchange_seq]|[exchange_ts]|[local_ts]|[event_type]|[price]|[qty]|[side]
   std::istringstream ss(line);
   std::string token;
   Event event;
@@ -48,13 +48,13 @@ std::optional<Event> EventReader::parse_line(const std::string &line) {
   while (std::getline(ss, token, '|')) {
     try {
       switch (field_idx) {
-      case 0: // exchange_seq (sequence number)
+      case 0: // exchange_seq
         event.exchange_seq = std::stoull(token);
         break;
-      case 1: // exchange_event_ts (event timestamp from exchange)
+      case 1: // exchange_ts
         event.exchange_ts = std::stoull(token);
         break;
-      case 2: // local_ingest_ts (local ingestion timestamp)
+      case 2: // local_ts
         event.local_ts = std::stoull(token);
         break;
       case 3: // event_type
@@ -67,7 +67,7 @@ std::optional<Event> EventReader::parse_line(const std::string &line) {
         event.quantity = std::stod(token);
         break;
       case 6: // side
-        event.side = (token == "BID") ? Side::BID : Side::ASK;
+        event.side = (token == "BID" || token == "B") ? Side::BID : Side::ASK;
         break;
       }
       field_idx++;

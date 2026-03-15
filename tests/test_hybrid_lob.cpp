@@ -1,8 +1,9 @@
 #include "../engine/order_book/OrderBook.h"
+#include "../engine/strategy/RollingMath.h"
 #include <cassert>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
-
 
 using namespace lob;
 
@@ -228,6 +229,41 @@ void test_case_9() {
   std::cout << " PASSED: FIFO order preserved correctly" << std::endl;
 }
 
+// Test Case 10: Rolling Math Numerical Stability
+void test_case_10() {
+  std::cout << "\n=== Test Case 10: Rolling Math Numerical Stability ==="
+            << std::endl;
+
+  // Test Median
+  RollingMedian rmed(3);
+  rmed.add(10.0);
+  assert(std::abs(rmed.get_median() - 10.0) < 1e-6);
+  rmed.add(20.0);
+  assert(std::abs(rmed.get_median() - 15.0) < 1e-6);
+  rmed.add(30.0);
+  assert(std::abs(rmed.get_median() - 20.0) < 1e-6);
+  rmed.add(5.0); // window is now [20, 30, 5], median is 20
+  assert(std::abs(rmed.get_median() - 20.0) < 1e-6);
+
+  // Test Variance
+  RollingVariance rvar(3);
+  rvar.add(2.0);
+  rvar.add(4.0);
+  rvar.add(4.0);
+  rvar.add(4.0); // Window is [4, 4, 4]
+  assert(std::abs(rvar.get_mean() - 4.0) < 1e-6);
+  assert(std::abs(rvar.get_std_dev() - 0.0) < 1e-6);
+
+  rvar.add(10.0); // Window is [4, 4, 10], mean = 6
+  assert(std::abs(rvar.get_mean() - 6.0) < 1e-6);
+
+  assert(std::abs(rvar.get_std_dev() - std::sqrt(8.0)) < 1e-6);
+
+  std::cout
+      << " PASSED: O(1)/O(logN) Rolling Math Numerical Stability validated"
+      << std::endl;
+}
+
 int main() {
   std::cout << "========================================" << std::endl;
   std::cout << "Hybrid L2/L3 Order Book Test Suite" << std::endl;
@@ -243,6 +279,7 @@ int main() {
     test_case_7();
     test_case_8();
     test_case_9();
+    test_case_10();
 
     std::cout << "\n========================================" << std::endl;
     std::cout << " ALL TESTS PASSED!" << std::endl;
