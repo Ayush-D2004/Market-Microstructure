@@ -180,8 +180,8 @@ int main(int argc, char *argv[]) {
 
     // Log latency every 1000 events
     if (events_processed % 1000 == 0) {
-      metrics.log_latency(event.exchange_ts * 1000, event.local_ts * 1000,
-                          (event.local_ts * 1000) + latency_us);
+      metrics.log_latency(event.exchange_ts, event.local_ts,
+                          event.local_ts + (latency_us / 1000));
     }
 
     events_processed++;

@@ -75,7 +75,7 @@ class LogAnalyzer:
             stats['total_trades'] = len(self.trades_df)
             stats['buy_trades'] = len(self.trades_df[self.trades_df['Side'] == 'BUY'])
             stats['sell_trades'] = len(self.trades_df[self.trades_df['Side'] == 'SELL'])
-            stats['avg_trade_price'] = self.trades_df['Price_USD'].mean()
+            stats['avg_trade_price'] = self.trades_df['ExecutionPrice_USD'].mean()
             stats['total_volume'] = self.trades_df['Quantity_BTC'].sum()
         
         # PnL statistics
