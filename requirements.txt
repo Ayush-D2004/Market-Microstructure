@@ -3,3 +3,6 @@ requests
 pandas
 matplotlib
 numpy
+google-generativeai
+python-dotenv
+Pillow

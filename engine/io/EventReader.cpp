@@ -56,6 +56,10 @@ std::optional<Event> EventReader::parse_line(const std::string &line) {
         break;
       case 2: // local_ts
         event.local_ts = std::stoull(token);
+        if (event.local_ts < event.exchange_ts) {
+            // Clock drift fix for historical datasets
+            event.local_ts = event.exchange_ts + 2; 
+        }
         break;
       case 3: // event_type
         event.event_type = token;

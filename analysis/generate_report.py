@@ -40,10 +40,11 @@ Imbalance Predictive Power (Pearson & Spearman over time horizons):
 {predictive_power_data}
 
 Instructions for the report:
-1. Write a technical microstructural report focusing on system latency, efficiency, spread behavior, and predictive power.
-2. I will provide you with several images (plots) that were generated from our live data.
-3. For EVERY image I provide, you must include it directly in your response using standard Markdown image syntax exactly as I specify, and IMMEDIATELY BELOW it, write a short, specific analytical explanation of what the chart shows and what conclusions we can draw.
-4. Format the final response entirely in professional Markdown format.
+1. Write a formal, academic-tier technical microstructural report analyzing current market conditions, evaluating how well the newly implemented C++ system has performed, and deriving insights into the predictive power of order book imbalances.
+2. Maintain a highly professional, objective tone appropriate for quantitative researchers and high-frequency trading engineers. Avoid casual language.
+3. I will provide you with several images (plots) that were generated from our live data.
+4. For EVERY image I provide, you must include it directly in your response using standard Markdown image syntax exactly as I specify, and IMMEDIATELY BELOW it, write a formal and specific analytical explanation of what the chart implies regarding market variables or the system's execution pipeline.
+5. Format the final output entirely in a structured, professional Markdown document.
 """
 
     contents = [prompt]
